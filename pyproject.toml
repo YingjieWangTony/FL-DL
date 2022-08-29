@@ -6,9 +6,19 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 packages = [{include = "fl_dl"}]
 
-# [tool.poetry.dependencies]
-# python = "~=3.9.0"
+[tool.poetry.dependencies]
+python = ">=3.7,<3.11"
+numpy = "1.21.2"
+scikit-learn = "1.0.1"
+nest-asyncio = "1.5.1"
+matplotlib = "3.5.0"
+tensorflow = "1.13.1"
 
+
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.15.1"
 
 [build-system]
 requires = ["poetry-core"]
