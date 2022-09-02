@@ -8,12 +8,19 @@ packages = [{include = "fl_dl"}]
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.11"
-numpy = "1.21.2"
-scikit-learn = "1.0.1"
-nest-asyncio = "1.5.1"
-matplotlib = "3.5.0"
-tensorflow = "1.13.1"
-
+jupyter = "1.0.0"
+scikit-learn = "1.0.2"
+nest-asyncio = "1.5.5"
+matplotlib = "3.5.3"
+tensorflow = "2.7.0"
+tensorflow-federated-nightly = "0.19.0.dev20220218"
+tf-nightly = "2.11.0.dev20220901"
+tb-nightly = "2.11.0a20220901"
+sklearn = "0.0"
+setuptools = "63.4.1"
+prompt-toolkit = "3.0.31"
+jupyter-client = "7.3.5"
+ipykernel = "6.15.2"
 
 
 
