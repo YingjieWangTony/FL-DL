@@ -20,6 +20,11 @@ np.random.seed(24)
 IFPLOT = 0
 DataProcessing = 0
 FL_STEPS = 0
+NUM_AGENTS = 10 #For current dataset, maximum value = 30
+TRAINING_LOOP = 100
+LOCAL_TRAINING_STEP = 1
+CONSENSUS_STEP = 1
+BATCHSIZE = 48
 #Predefined Function
 def plot_series(time, series, format='-', start=0, end=None, label=None, color=None):
   plt.plot(time[start:end], series[start:end], format, label=label, color=color)
@@ -63,7 +68,7 @@ def preprocess_train(dataset):
         y=tf.reshape(y_d, [-1, 1])
     )
   return dataset.repeat(num_epochs).shuffle(shuffle_buffer, seed=1).batch(
-      batch_size).map(batch_format_fn).prefetch(prefetch_buffer)
+      BATCHSIZE).map(batch_format_fn).prefetch(prefetch_buffer)
 
 def preprocess_test(dataset):
   def batch_format_fn(x_d, y_d):
@@ -71,7 +76,7 @@ def preprocess_test(dataset):
         x=x_d,
         y=tf.reshape(y_d, [-1, 1])
     )
-  return dataset.batch(batch_size).map(batch_format_fn).prefetch(prefetch_buffer)
+  return dataset.batch(BATCHSIZE).map(batch_format_fn).prefetch(prefetch_buffer)
 
 def create_DNN():
   return tf.keras.models.Sequential([
@@ -93,12 +98,64 @@ def model_fn():
       metrics = [tf.keras.metrics.MeanSquaredError()]
   )
 
-def Consensus(models,step=10,Graph='RING'):
+def Consensus(data,steps,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Continuous'):
+    NUM_AGENTS = len(data)
+    if Graph == 'RING':
+        if TIME_DOMAIN == 'Continuous':
+            L = 2 * np.eye(NUM_AGENTS) - np.eye(NUM_AGENTS, k=1) - np.eye(NUM_AGENTS, k=-1) - np.eye(NUM_AGENTS,
+                                                                                                     k=NUM_AGENTS - 1) - np.eye(
+                NUM_AGENTS, k=-NUM_AGENTS + 1)
+        else:
+            L = 0.5 * np.eye(NUM_AGENTS) + 0.25 * np.eye(NUM_AGENTS, k=1) + 0.25 * np.eye(NUM_AGENTS,
+                                                                                          k=-1) + 0.25 * np.eye(
+                NUM_AGENTS, k=NUM_AGENTS - 1) + 0.25 * np.eye(NUM_AGENTS, k=-NUM_AGENTS + 1)
+    lenth = 1
+    for qqq in range(len(data[0].shape)):
+        lenth = lenth * data[0].shape[qqq]
+    consensusdata = np.array(data).reshape(len(data),lenth)
+    for i in range(steps):
+        # data = np.matmul(np.kron(np.eye(len(data[0])),L),np.array(data).reshape(400,1))
+        if TIME_DOMAIN == 'Continuous':
+            consensusdata = consensusdata - LR * np.matmul(L, consensusdata)
+        else:
+            consensusdata = (1-LR) * np.matmul(L, consensusdata)
+        # consensusdata = np.matmul(L, consensusdata)
+    output = []
+    for i in range(len(data)):
+        output.append(consensusdata[i].reshape(data[0].shape))
+    return output
+def DistributedLearning(models,step=10,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Discrete'):
     NUM_AGENTS = len(models)
-    if Graph=='RING':
-        L =
+    # if Graph=='RING':
+    #     if TIME_DOMAIN=='Continuous':
+    #         L = 2*np.eye(NUM_AGENTS) - np.eye(NUM_AGENTS,k=1) - np.eye(NUM_AGENTS,k=-1) - np.eye(NUM_AGENTS,k=NUM_AGENTS-1) - np.eye(NUM_AGENTS,k=-NUM_AGENTS+1)
+    #     else:
+    #         L = 0.5*np.eye(NUM_AGENTS) + 0.25*np.eye(NUM_AGENTS,k=1) + 0.25*np.eye(NUM_AGENTS,k=-1) + 0.25*np.eye(NUM_AGENTS,k=NUM_AGENTS-1) + 0.25*np.eye(NUM_AGENTS,k=-NUM_AGENTS+1)
+    weights = [[] for i in range(NUM_AGENTS)]
+    for i in range(NUM_AGENTS):
+        weights[i] = models[i].get_weights()
+
+    # for j in range(step):
+    for t in range(len(weights[0])):
+        temp = []
+        for tt in range(NUM_AGENTS):
+            temp.append(weights[tt][t])
+        temp = Consensus(temp, step, LR=LR, Graph=Graph,TIME_DOMAIN = TIME_DOMAIN)
+        for tt in range(NUM_AGENTS):
+            weights[tt][t] = temp[tt]
+
+        # for k in range(len(weights[0])):
+        #     weights_temp = [weights[i][k] for i in range(NUM_AGENTS)]
+        #     if TIME_DOMAIN == 'Continuous':
+        #         weights_temp = weights_temp - LR * L * weights_temp
+        #     else:
+        #         weights_temp = (1-LR) * L * weights_temp
 
 
+
+
+    for i in range(NUM_AGENTS):
+        models[i].set_weights(weights[i])
     return models
 # Data Processing
 
@@ -156,7 +213,6 @@ test_data_fed = create_dataset_fed(test_raw, time_step)
 example_dataset = train_data_fed[0]
 example_element = next(iter(example_dataset))
 num_epochs = 10
-batch_size = 48
 shuffle_buffer = 100
 prefetch_buffer = 10
 preprocess_example = preprocess_train(example_dataset)
@@ -166,55 +222,53 @@ test_set_fed = [preprocess_test(test_data_fed[i]) for i in range(len(test_raw))]
 train_set_central = train_set_fed[0]
 test_set_central = test_set_fed[0]
 
-# Creating Models
-if FL_STEPS==1:
-    iterative_process = tff.learning.build_federated_averaging_process(
-        model_fn,
-        client_optimizer_fn=lambda: keras.optimizers.Adam(0.001),
-        server_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=1)
-    )
-
-    logdir = "/tmp/logs/scalars/training"
-    summary_writer = tf.summary.create_file_writer(logdir)
-    state = iterative_process.initialize()
-    num_rounds = 10
-    fed_metrics = [[] for i in range(0, num_rounds)]
-
-    start_time = time.time()
-    for i in range(0, num_rounds):
-      state, metrics = iterative_process.next(state, train_set_fed)
-      fed_metrics[i] = metrics
-      print('round {:2d}, metrics={}'.format(i+1, metrics))
-
-    end_time = time.time()
-    train_time = end_time - start_time
-    print(train_time)
-
-    evaluation = tff.learning.build_federated_evaluation(model_fn)
-    metrics = evaluation(state.model, test_set_fed)
-    print(metrics)
-    model_fed = create_DNN()
-    state.model.assign_weights_to(model_fed)
-    sample = tf.nest.map_structure(lambda x: x.numpy(), next(iter(test_set_fed[0])))
-    prediciton_fed = model_fed.predict(sample['x'])
-    print(f"MSE_fed: {mean_squared_error(prediciton_fed, sample['y'])}")
-    print(f"R2_fed: {r2_score(sample['y'], prediciton_fed)}")
-    if IFPLOT==1:
-      time_plot = range(0, 48)
-      plt.figure(figsize=(10, 6))
-      plot_series(time_plot, prediciton_fed, color='red')
-      plot_series(time_plot, sample['y'])
+# # Creating Models
+# if FL_STEPS==1:
+#     iterative_process = tff.learning.build_federated_averaging_process(
+#         model_fn,
+#         client_optimizer_fn=lambda: keras.optimizers.Adam(0.001),
+#         server_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=1)
+#     )
+#
+#     logdir = "/tmp/logs/scalars/training"
+#     summary_writer = tf.summary.create_file_writer(logdir)
+#     state = iterative_process.initialize()
+#     num_rounds = 10
+#     fed_metrics = [[] for i in range(0, num_rounds)]
+#
+#     start_time = time.time()
+#     for i in range(0, num_rounds):
+#       state, metrics = iterative_process.next(state, train_set_fed)
+#       fed_metrics[i] = metrics
+#       print('round {:2d}, metrics={}'.format(i+1, metrics))
+#
+#     end_time = time.time()
+#     train_time = end_time - start_time
+#     print(train_time)
+#
+#     evaluation = tff.learning.build_federated_evaluation(model_fn)
+#     metrics = evaluation(state.model, test_set_fed)
+#     print(metrics)
+#     model_fed = create_DNN()
+#     state.model.assign_weights_to(model_fed)
+#     sample = tf.nest.map_structure(lambda x: x.numpy(), next(iter(test_set_fed[0])))
+#     prediciton_fed = model_fed.predict(sample['x'])
+#     print(f"MSE_fed: {mean_squared_error(prediciton_fed, sample['y'])}")
+#     print(f"R2_fed: {r2_score(sample['y'], prediciton_fed)}")
+#     if IFPLOT==1:
+#       time_plot = range(0, 48)
+#       plt.figure(figsize=(10, 6))
+#       plot_series(time_plot, prediciton_fed, color='red')
+#       plot_series(time_plot, sample['y'])
 
 
 
 # Distributed Learning Part
-NUM_AGENTS = 4
-TRAINING_LOOP = 10
-xx = [[] for i in range(30)]
-yy = [[] for i in range(30)]
-xx_test = [[] for i in range(30)]
-yy_test = [[] for i in range(30)]
-for i in range(0, 30):
+xx = [[] for i in range(NUM_AGENTS)]
+yy = [[] for i in range(NUM_AGENTS)]
+xx_test = [[] for i in range(NUM_AGENTS)]
+yy_test = [[] for i in range(NUM_AGENTS)]
+for i in range(0, NUM_AGENTS):
   xx[i], yy[i] = create_dataset_central(train_raw[i], time_step)
   xx_test[i], yy_test[i] = create_dataset_central(test_raw[i], time_step)
 
@@ -231,16 +285,14 @@ R2_cen = [[] for i in range(NUM_AGENTS)]
 
 for steps in range(TRAINING_LOOP):
     for i in range(NUM_AGENTS):
-        models[i].fit(x=xx[i],y=yy[i],batch_size=batch_size,epochs=1,callbacks=[callback],shuffle=True,verbose=0,)
+        models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
         l[i] = models[i].predict(xx_test[i])
         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
 
-    models = Consensus(models,step=10)
-
-    # for i in range(NUM_AGENTS):
-    #     l[i] = models[i].predict(xx_test[i])
-    #     MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
+    models = DistributedLearning(models,step=CONSENSUS_STEP)
     print('Average_MSE=', np.mean(MSE_cen))
+
+
 
 
 
