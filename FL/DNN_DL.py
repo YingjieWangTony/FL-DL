@@ -98,16 +98,16 @@ def model_fn():
       metrics = [tf.keras.metrics.MeanSquaredError()]
   )
 
-def Laplacian_Matrix(NUM_AGENTS, topology='Ring'):
+def Laplacian_Matrix(NUM_AGENTS, topology='RING'):
         if topology == 'No':
             L = np.eye(NUM_AGENTS)
 
-        if topology == 'Ring':
+        if topology == 'RING':
             L = 0.5 * np.eye(NUM_AGENTS) + 0.25 * np.eye(NUM_AGENTS, k=1) + 0.25 * np.eye(NUM_AGENTS,
                                                                                           k=-1) + 0.25 * np.eye(
                 NUM_AGENTS, k=NUM_AGENTS - 1) + 0.25 * np.eye(NUM_AGENTS, k=-NUM_AGENTS + 1)
 
-        if topology == 'Full':
+        if topology == 'FULL':
             A = np.ones([NUM_AGENTS, NUM_AGENTS]) - np.eye(NUM_AGENTS)
             L = (A + sum(A[0]) * np.eye(NUM_AGENTS)) / sum(A + sum(A[0]) * np.eye(NUM_AGENTS))
 
@@ -133,21 +133,22 @@ def Consensus(data,steps,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Continuous'):
     #                                                                                       k=-1) + 0.25 * np.eye(
     #             NUM_AGENTS, k=NUM_AGENTS - 1) + 0.25 * np.eye(NUM_AGENTS, k=-NUM_AGENTS + 1)
     L = Laplacian_Matrix(NUM_AGENTS,topology=Graph)
-    lenth = 1
-    for qqq in range(len(data[0].shape)):
-        lenth = lenth * data[0].shape[qqq]
-    consensusdata = np.array(data).reshape(len(data),lenth)
-    for i in range(steps):
-        # data = np.matmul(np.kron(np.eye(len(data[0])),L),np.array(data).reshape(400,1))
-        if TIME_DOMAIN == 'Continuous':
-            consensusdata = consensusdata - LR * np.matmul(L, consensusdata)
-        else:
-            consensusdata = (1-LR) * np.matmul(L, consensusdata)
-        # consensusdata = np.matmul(L, consensusdata)
-    output = []
-    for i in range(len(data)):
-        output.append(consensusdata[i].reshape(data[0].shape))
-    return output
+    # lenth = 1
+    # for qqq in range(len(data[0].shape)):
+    #     lenth = lenth * data[0].shape[qqq]
+    # consensusdata = np.array(data).reshape(len(data),lenth)
+    output_temp = np.tensordot(L,data,axes=((1),(0)))
+    # for i in range(steps):
+    #     # data = np.matmul(np.kron(np.eye(len(data[0])),L),np.array(data).reshape(400,1))
+    #     if TIME_DOMAIN == 'Continuous':
+    #         consensusdata = consensusdata - LR * np.matmul(L, consensusdata)
+    #     else:
+    #         consensusdata = (1-LR) * np.matmul(L, consensusdata)
+    #     consensusdata = np.matmul(L, consensusdata)
+    # output = []
+    # for i in range(len(data)):
+    #     output.append(consensusdata[i].reshape(data[0].shape))
+    return output_temp
 def DistributedLearning(models,step=10,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Discrete'):
     NUM_AGENTS = len(models)
     # if Graph=='RING':
@@ -223,7 +224,7 @@ if DataProcessing == 1:
           consumption[i][j] = DNL
           out_dn[i] = out_dn[i] + 1
 else:
-    consumption=np.load('consumption.npy')
+    consumption=np.load('/home/yi/Projects/FL-DL/FL/consumption.npy')
 
 
 # Preparing Training dataset
