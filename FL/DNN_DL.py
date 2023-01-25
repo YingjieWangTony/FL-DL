@@ -98,17 +98,41 @@ def model_fn():
       metrics = [tf.keras.metrics.MeanSquaredError()]
   )
 
-def Consensus(data,steps,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Continuous'):
-    NUM_AGENTS = len(data)
-    if Graph == 'RING':
-        if TIME_DOMAIN == 'Continuous':
-            L = 2 * np.eye(NUM_AGENTS) - np.eye(NUM_AGENTS, k=1) - np.eye(NUM_AGENTS, k=-1) - np.eye(NUM_AGENTS,
-                                                                                                     k=NUM_AGENTS - 1) - np.eye(
-                NUM_AGENTS, k=-NUM_AGENTS + 1)
-        else:
+def Laplacian_Matrix(NUM_AGENTS, topology='Ring'):
+        if topology == 'No':
+            L = np.eye(NUM_AGENTS)
+
+        if topology == 'Ring':
             L = 0.5 * np.eye(NUM_AGENTS) + 0.25 * np.eye(NUM_AGENTS, k=1) + 0.25 * np.eye(NUM_AGENTS,
                                                                                           k=-1) + 0.25 * np.eye(
                 NUM_AGENTS, k=NUM_AGENTS - 1) + 0.25 * np.eye(NUM_AGENTS, k=-NUM_AGENTS + 1)
+
+        if topology == 'Full':
+            A = np.ones([NUM_AGENTS, NUM_AGENTS]) - np.eye(NUM_AGENTS)
+            L = (A + sum(A[0]) * np.eye(NUM_AGENTS)) / sum(A + sum(A[0]) * np.eye(NUM_AGENTS))
+
+        if topology == 'MS':
+            A = np.random.randint(2, size=NUM_AGENTS * NUM_AGENTS)
+            A = (np.ones([NUM_AGENTS, NUM_AGENTS]) - np.eye(NUM_AGENTS)) * A.reshape([NUM_AGENTS, NUM_AGENTS])
+            vec = A + np.diag(A.sum(axis=1))
+            zero_id = np.where(vec.sum(axis=1) == 0)
+            for k in range(len(zero_id[0])):
+                vec[zero_id[0][k]][zero_id[0][k]] = 1
+            L = vec / vec.sum(axis=1).reshape(-1, 1)
+        return L
+
+def Consensus(data,steps,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Continuous'):
+    NUM_AGENTS = len(data)
+    # if Graph == 'RING':
+    #     if TIME_DOMAIN == 'Continuous':
+    #         L = 2 * np.eye(NUM_AGENTS) - np.eye(NUM_AGENTS, k=1) - np.eye(NUM_AGENTS, k=-1) - np.eye(NUM_AGENTS,
+    #                                                                                                  k=NUM_AGENTS - 1) - np.eye(
+    #             NUM_AGENTS, k=-NUM_AGENTS + 1)
+    #     else:
+    #         L = 0.5 * np.eye(NUM_AGENTS) + 0.25 * np.eye(NUM_AGENTS, k=1) + 0.25 * np.eye(NUM_AGENTS,
+    #                                                                                       k=-1) + 0.25 * np.eye(
+    #             NUM_AGENTS, k=NUM_AGENTS - 1) + 0.25 * np.eye(NUM_AGENTS, k=-NUM_AGENTS + 1)
+    L = Laplacian_Matrix(NUM_AGENTS,topology=Graph)
     lenth = 1
     for qqq in range(len(data[0].shape)):
         lenth = lenth * data[0].shape[qqq]
