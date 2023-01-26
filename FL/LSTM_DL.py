@@ -436,200 +436,7 @@ for i in range(0, NUM_AGENTS):
 #     models[i].save('Results/wavenet/model'+garph+str(i),include_optimizer = True)
 
 
-# models = [create_LSTM_model() for i in range(NUM_AGENTS)]
-# garph = 'RING'
-# l = [[] for i in range(NUM_AGENTS)]
-# MSE_cen = [[] for i in range(NUM_AGENTS)]
-# R2_cen = [[] for i in range(NUM_AGENTS)]
-# adam = keras.optimizers.Adam(learning_rate=0.001)
-# for i in range(NUM_AGENTS):
-#     # models[i] = create_DNN()
-#     models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-#     # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-# hist_l = [[] for i in range(NUM_AGENTS)]
-# hist_mse = [[] for i in range(NUM_AGENTS)]
-# hist_mean = []
-# callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-# for steps in range(TRAINING_LOOP):
-#     for i in range(NUM_AGENTS):
-#         models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-#         l[i] = models[i].predict(xx_test[i])
-#         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-#         hist_l[i].append(l[i])
-#         hist_mse[i].append(MSE_cen[i])
-
-#     models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-#     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-#     hist_mean.append(np.mean(MSE_cen))
-
-# np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-# for i in range(NUM_AGENTS):
-#     models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
-
-
-# models = [create_LSTM_model() for i in range(NUM_AGENTS)]
-# garph = 'FULL'
-# l = [[] for i in range(NUM_AGENTS)]
-# MSE_cen = [[] for i in range(NUM_AGENTS)]
-# R2_cen = [[] for i in range(NUM_AGENTS)]
-# adam = keras.optimizers.Adam(learning_rate=0.001)
-# for i in range(NUM_AGENTS):
-#     # models[i] = create_DNN()
-#     models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-#     # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-# hist_l = [[] for i in range(NUM_AGENTS)]
-# hist_mse = [[] for i in range(NUM_AGENTS)]
-# hist_mean = []
-# callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-# for steps in range(TRAINING_LOOP):
-#     for i in range(NUM_AGENTS):
-#         models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-#         l[i] = models[i].predict(xx_test[i])
-#         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-#         hist_l[i].append(l[i])
-#         hist_mse[i].append(MSE_cen[i])
-
-#     models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-#     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-#     hist_mean.append(np.mean(MSE_cen))
-
-# np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-# for i in range(NUM_AGENTS):
-#     models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
-
-
-# models = [create_LSTM_model() for i in range(NUM_AGENTS)]
-# garph = 'MS'
-# l = [[] for i in range(NUM_AGENTS)]
-# MSE_cen = [[] for i in range(NUM_AGENTS)]
-# R2_cen = [[] for i in range(NUM_AGENTS)]
-# adam = keras.optimizers.Adam(learning_rate=0.001)
-# for i in range(NUM_AGENTS):
-#     # models[i] = create_DNN()
-#     models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-#     # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-# hist_l = [[] for i in range(NUM_AGENTS)]
-# hist_mse = [[] for i in range(NUM_AGENTS)]
-# hist_mean = []
-# callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-# for steps in range(TRAINING_LOOP):
-#     for i in range(NUM_AGENTS):
-#         models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-#         l[i] = models[i].predict(xx_test[i])
-#         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-#         hist_l[i].append(l[i])
-#         hist_mse[i].append(MSE_cen[i])
-
-#     models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-#     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-#     hist_mean.append(np.mean(MSE_cen))
-
-# np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-# for i in range(NUM_AGENTS):
-#     models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
-
-
-# models = [create_CNN_model() for i in range(NUM_AGENTS)]
-# garph = 'RING'
-# l = [[] for i in range(NUM_AGENTS)]
-# MSE_cen = [[] for i in range(NUM_AGENTS)]
-# R2_cen = [[] for i in range(NUM_AGENTS)]
-# adam = keras.optimizers.Adam(learning_rate=0.001)
-# for i in range(NUM_AGENTS):
-#     # models[i] = create_DNN()
-#     models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-#     # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-# hist_l = [[] for i in range(NUM_AGENTS)]
-# hist_mse = [[] for i in range(NUM_AGENTS)]
-# hist_mean = []
-# callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-# for steps in range(TRAINING_LOOP):
-#     for i in range(NUM_AGENTS):
-#         models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-#         l[i] = models[i].predict(xx_test[i])
-#         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-#         hist_l[i].append(l[i])
-#         hist_mse[i].append(MSE_cen[i])
-
-#     models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-#     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-#     hist_mean.append(np.mean(MSE_cen))
-
-# np.savez('Results/CNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-# for i in range(NUM_AGENTS):
-#     models[i].save('Results/CNN/model'+garph+str(i),include_optimizer = True)
-
-# models = [create_CNN_model() for i in range(NUM_AGENTS)]
-# garph = 'FULL'
-# l = [[] for i in range(NUM_AGENTS)]
-# MSE_cen = [[] for i in range(NUM_AGENTS)]
-# R2_cen = [[] for i in range(NUM_AGENTS)]
-# adam = keras.optimizers.Adam(learning_rate=0.001)
-# for i in range(NUM_AGENTS):
-#     # models[i] = create_DNN()
-#     models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-#     # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-# hist_l = [[] for i in range(NUM_AGENTS)]
-# hist_mse = [[] for i in range(NUM_AGENTS)]
-# hist_mean = []
-# callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-# for steps in range(TRAINING_LOOP):
-#     for i in range(NUM_AGENTS):
-#         models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-#         l[i] = models[i].predict(xx_test[i])
-#         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-#         hist_l[i].append(l[i])
-#         hist_mse[i].append(MSE_cen[i])
-
-#     models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-#     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-#     hist_mean.append(np.mean(MSE_cen))
-
-# np.savez('Results/CNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-# for i in range(NUM_AGENTS):
-#     models[i].save('Results/CNN/model'+garph+str(i),include_optimizer = True)
-
-# models = [create_CNN_model() for i in range(NUM_AGENTS)]
-# garph = 'MS'
-# l = [[] for i in range(NUM_AGENTS)]
-# MSE_cen = [[] for i in range(NUM_AGENTS)]
-# R2_cen = [[] for i in range(NUM_AGENTS)]
-# adam = keras.optimizers.Adam(learning_rate=0.001)
-# for i in range(NUM_AGENTS):
-#     # models[i] = create_DNN()
-#     models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-#     # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-# hist_l = [[] for i in range(NUM_AGENTS)]
-# hist_mse = [[] for i in range(NUM_AGENTS)]
-# hist_mean = []
-# callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-# for steps in range(TRAINING_LOOP):
-#     for i in range(NUM_AGENTS):
-#         models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-#         l[i] = models[i].predict(xx_test[i])
-#         MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-#         hist_l[i].append(l[i])
-#         hist_mse[i].append(MSE_cen[i])
-
-#     models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-#     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-#     hist_mean.append(np.mean(MSE_cen))
-
-# np.savez('Results/CNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-# for i in range(NUM_AGENTS):
-#     models[i].save('Results/CNN/model'+garph+str(i),include_optimizer = True)
-
-
-
-
-
-models = [create_DNN() for i in range(NUM_AGENTS)]
+models = [create_LSTM_model() for i in range(NUM_AGENTS)]
 garph = 'RING'
 l = [[] for i in range(NUM_AGENTS)]
 MSE_cen = [[] for i in range(NUM_AGENTS)]
@@ -656,11 +463,12 @@ for steps in range(TRAINING_LOOP):
     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
     hist_mean.append(np.mean(MSE_cen))
 
-np.savez('Results/DNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
+np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
 for i in range(NUM_AGENTS):
-    models[i].save('Results/DNN/model'+garph+str(i),include_optimizer = True)
+    models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
 
-models = [create_DNN() for i in range(NUM_AGENTS)]
+
+models = [create_LSTM_model() for i in range(NUM_AGENTS)]
 garph = 'FULL'
 l = [[] for i in range(NUM_AGENTS)]
 MSE_cen = [[] for i in range(NUM_AGENTS)]
@@ -687,11 +495,12 @@ for steps in range(TRAINING_LOOP):
     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
     hist_mean.append(np.mean(MSE_cen))
 
-np.savez('Results/DNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
+np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
 for i in range(NUM_AGENTS):
-    models[i].save('Results/DNN/model'+garph+str(i),include_optimizer = True)
+    models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
 
-models = [create_DNN() for i in range(NUM_AGENTS)]
+
+models = [create_LSTM_model() for i in range(NUM_AGENTS)]
 garph = 'MS'
 l = [[] for i in range(NUM_AGENTS)]
 MSE_cen = [[] for i in range(NUM_AGENTS)]
@@ -718,6 +527,9 @@ for steps in range(TRAINING_LOOP):
     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
     hist_mean.append(np.mean(MSE_cen))
 
-np.savez('Results/DNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
+np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
 for i in range(NUM_AGENTS):
-    models[i].save('Results/DNN/model'+garph+str(i),include_optimizer = True)
+    models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
+
+
+

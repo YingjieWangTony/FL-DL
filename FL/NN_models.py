@@ -7,7 +7,7 @@ def create_LSTM_model():
       keras.layers.Dense(1),
   ])
   
- def create_CNN_model():
+def create_CNN_model():
   return tf.keras.models.Sequential([
       keras.layers.Conv1D(filters=64, kernel_size=2, activation='relu', input_shape = [48, 1], kernel_regularizer='l2'),
       keras.layers.Flatten(),
@@ -17,7 +17,7 @@ def create_LSTM_model():
   ])
   
   # This one is WaveNet, a speciall NN based on CNN
-  def create_CNN_model():
+def create_CNN_model():
     model = keras.models.Sequential()
     model.add(keras.layers.InputLayer(input_shape=[48, 1]))
     for dilation_rate in (1, 2 , 4, 8):
