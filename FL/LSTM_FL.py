@@ -81,22 +81,22 @@ def create_dataset_fed(data, time_step):
   x_nest = np.array(x_nest)
   return [tf.data.Dataset.from_tensor_slices((x_nest[x], np.array(y_nest[x]))) for x in range(len(x_nest))]
 
-def preprocess_train(dataset):
-  def batch_format_fn(x_d, y_d):
-    return OrderedDict(
-        x=x_d,
-        y=tf.reshape(y_d, [-1, 1])
-    )
-  return dataset.repeat(num_epochs).shuffle(shuffle_buffer, seed=1).batch(
-      BATCHSIZE).map(batch_format_fn).prefetch(prefetch_buffer)
+# def preprocess_train(dataset):
+#   def batch_format_fn(x_d, y_d):
+#     return OrderedDict(
+#         x=x_d,
+#         y=tf.reshape(y_d, [-1, 1])
+#     )
+#   return dataset.repeat(num_epochs).shuffle(shuffle_buffer, seed=1).batch(
+#       BATCHSIZE).map(batch_format_fn).prefetch(prefetch_buffer)
 
-def preprocess_test(dataset):
-  def batch_format_fn(x_d, y_d):
-    return OrderedDict(
-        x=x_d,
-        y=tf.reshape(y_d, [-1, 1])
-    )
-  return dataset.batch(BATCHSIZE).map(batch_format_fn).prefetch(prefetch_buffer)
+# def preprocess_test(dataset):
+#   def batch_format_fn(x_d, y_d):
+#     return OrderedDict(
+#         x=x_d,
+#         y=tf.reshape(y_d, [-1, 1])
+#     )
+#   return dataset.batch(BATCHSIZE).map(batch_format_fn).prefetch(prefetch_buffer)
 
 def create_CNN_model():
   return tf.keras.models.Sequential([
@@ -118,18 +118,18 @@ def create_DNN():
       keras.layers.Dense(1)
   ])
 
-def model_fn():
-  keras_model = create_DNN()
-  return tff.learning.from_keras_model(
-      keras_model,
-      input_spec = preprocess_example.element_spec,
-      loss = tf.keras.losses.MeanSquaredError(),
-      metrics = [tf.keras.metrics.MeanSquaredError()]
-  )
+# def model_fn():
+#   keras_model = create_DNN()
+#   return tff.learning.from_keras_model(
+#       keras_model,
+#       input_spec = preprocess_example.element_spec,
+#       loss = tf.keras.losses.MeanSquaredError(),
+#       metrics = [tf.keras.metrics.MeanSquaredError()]
+#   )
 
 def Laplacian_Matrix(NUM_AGENTS, topology='RING'):
-        if topology == 'No':
-            L = np.eye(NUM_AGENTS)
+        if topology == 'FedAvg':
+            L = np.ones((NUM_AGENTS,NUM_AGENTS))/NUM_AGENTS
 
         if topology == 'RING':
             L = 0.5 * np.eye(NUM_AGENTS) + 0.25 * np.eye(NUM_AGENTS, k=1) + 0.25 * np.eye(NUM_AGENTS,
@@ -161,6 +161,9 @@ def Consensus(data,steps,LR = 0.02,Graph='RING',TIME_DOMAIN = 'Continuous'):
     #         L = 0.5 * np.eye(NUM_AGENTS) + 0.25 * np.eye(NUM_AGENTS, k=1) + 0.25 * np.eye(NUM_AGENTS,
     #                                                                                       k=-1) + 0.25 * np.eye(
     #             NUM_AGENTS, k=NUM_AGENTS - 1) + 0.25 * np.eye(NUM_AGENTS, k=-NUM_AGENTS + 1)
+    # if Graph=='FedAvg':
+    #   output_temp=np.mean(data,axis=0)
+    # else:
     L = Laplacian_Matrix(NUM_AGENTS,topology=Graph)
     # lenth = 1
     # for qqq in range(len(data[0].shape)):
@@ -262,62 +265,44 @@ split = int(0.8*length)
 train_raw = [x[0: split] for x in consumption]
 test_raw = [x[split: ] for x in consumption]
 time_step = 48
-train_data_fed = create_dataset_fed(train_raw, time_step)
-test_data_fed = create_dataset_fed(test_raw, time_step)
-example_dataset = train_data_fed[0]
-example_element = next(iter(example_dataset))
-num_epochs = 10
-shuffle_buffer = 100
-prefetch_buffer = 10
-preprocess_example = preprocess_train(example_dataset)
+# train_data_fed = create_dataset_fed(train_raw, time_step)
+# test_data_fed = create_dataset_fed(test_raw, time_step)
+# example_dataset = train_data_fed[0]
+# example_element = next(iter(example_dataset))
+# num_epochs = 10
+# shuffle_buffer = 100
+# prefetch_buffer = 10
+# preprocess_example = preprocess_train(example_dataset)
 
-train_set_fed = [preprocess_train(train_data_fed[i]) for i in range(len(train_raw))]
-test_set_fed = [preprocess_test(test_data_fed[i]) for i in range(len(test_raw))]
-train_set_central = train_set_fed[0]
-test_set_central = test_set_fed[0]
+# train_set_fed = [preprocess_train(train_data_fed[i]) for i in range(len(train_raw))]
+# test_set_fed = [preprocess_test(test_data_fed[i]) for i in range(len(test_raw))]
+# train_set_central = train_set_fed[0]
+# test_set_central = test_set_fed[0]
 
-# # Creating Models
-# if FL_STEPS==1:
-#     iterative_process = tff.learning.build_federated_averaging_process(
-#         model_fn,
-#         client_optimizer_fn=lambda: keras.optimizers.Adam(0.001),
-#         server_optimizer_fn=lambda: tf.keras.optimizers.SGD(learning_rate=1)
-#     )
-#
-#     logdir = "/tmp/logs/scalars/training"
-#     summary_writer = tf.summary.create_file_writer(logdir)
-#     state = iterative_process.initialize()
-#     num_rounds = 10
-#     fed_metrics = [[] for i in range(0, num_rounds)]
-#
-#     start_time = time.time()
-#     for i in range(0, num_rounds):
-#       state, metrics = iterative_process.next(state, train_set_fed)
-#       fed_metrics[i] = metrics
-#       print('round {:2d}, metrics={}'.format(i+1, metrics))
-#
-#     end_time = time.time()
-#     train_time = end_time - start_time
-#     print(train_time)
-#
-#     evaluation = tff.learning.build_federated_evaluation(model_fn)
-#     metrics = evaluation(state.model, test_set_fed)
-#     print(metrics)
-#     model_fed = create_DNN()
-#     state.model.assign_weights_to(model_fed)
-#     sample = tf.nest.map_structure(lambda x: x.numpy(), next(iter(test_set_fed[0])))
-#     prediciton_fed = model_fed.predict(sample['x'])
-#     print(f"MSE_fed: {mean_squared_error(prediciton_fed, sample['y'])}")
-#     print(f"R2_fed: {r2_score(sample['y'], prediciton_fed)}")
-#     if IFPLOT==1:
-#       time_plot = range(0, 48)
-#       plt.figure(figsize=(10, 6))
-#       plot_series(time_plot, prediciton_fed, color='red')
-#       plot_series(time_plot, sample['y'])
+# # Central Model
+x_central, y_central = create_dataset_central(train_raw[0], time_step)
+x_test, y_test = create_dataset_central(test_raw[0], time_step)
+model_central = create_LSTM_model()
+adam = keras.optimizers.Adam(learning_rate=0.001)
+model_central.compile(loss='mse', optimizer=adam, metrics=['mse'])
+callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
+hist = model_central.fit(
+   x=x_central,
+   y=y_central,
+   batch_size=BATCHSIZE,
+   epochs=TRAINING_LOOP,
+   callbacks=[callback],
+   shuffle=True,
+   verbose=0,
+)
+np.savez('Results/LSTM/central_model.npz',hist_l=hist.history['loss'],hist_mse=hist.history['mse'])
+model_central.save('Results/LSTM/central_model',include_optimizer = True)
 
 
 
-# Distributed Learning Part
+
+
+# Federated Learning Part
 xx = [[] for i in range(NUM_AGENTS)]
 yy = [[] for i in range(NUM_AGENTS)]
 xx_test = [[] for i in range(NUM_AGENTS)]
@@ -326,12 +311,12 @@ for i in range(0, NUM_AGENTS):
   xx[i], yy[i] = create_dataset_central(train_raw[i], time_step)
   xx_test[i], yy_test[i] = create_dataset_central(test_raw[i], time_step)
 
-
-
-
-
-models = [create_CNN_model() for i in range(NUM_AGENTS)]
-garph = 'RING'
+# # models = [create_DNN() for i in range(NUM_AGENTS)]
+# # models = [create_LSTM_model() for i in range(NUM_AGENTS)]
+# # models = [create_CNN_model() for i in range(NUM_AGENTS)]
+# models = [create_wavenet_model() for i in range(NUM_AGENTS)]
+models = [create_LSTM_model() for i in range(NUM_AGENTS)]
+garph = 'FedAvg'
 l = [[] for i in range(NUM_AGENTS)]
 MSE_cen = [[] for i in range(NUM_AGENTS)]
 R2_cen = [[] for i in range(NUM_AGENTS)]
@@ -357,70 +342,7 @@ for steps in range(TRAINING_LOOP):
     print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
     hist_mean.append(np.mean(MSE_cen))
 
-np.savez('Results/CNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
+np.savez('Results/LSTM/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
 for i in range(NUM_AGENTS):
-    models[i].save('Results/CNN/model'+garph+str(i),include_optimizer = True)
-
-models = [create_CNN_model() for i in range(NUM_AGENTS)]
-garph = 'FULL'
-l = [[] for i in range(NUM_AGENTS)]
-MSE_cen = [[] for i in range(NUM_AGENTS)]
-R2_cen = [[] for i in range(NUM_AGENTS)]
-adam = keras.optimizers.Adam(learning_rate=0.001)
-for i in range(NUM_AGENTS):
-    # models[i] = create_DNN()
-    models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-    # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-hist_l = [[] for i in range(NUM_AGENTS)]
-hist_mse = [[] for i in range(NUM_AGENTS)]
-hist_mean = []
-callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-for steps in range(TRAINING_LOOP):
-    for i in range(NUM_AGENTS):
-        models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-        l[i] = models[i].predict(xx_test[i])
-        MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-        hist_l[i].append(l[i])
-        hist_mse[i].append(MSE_cen[i])
-
-    models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-    print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-    hist_mean.append(np.mean(MSE_cen))
-
-np.savez('Results/CNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-for i in range(NUM_AGENTS):
-    models[i].save('Results/CNN/model'+garph+str(i),include_optimizer = True)
-
-models = [create_CNN_model() for i in range(NUM_AGENTS)]
-garph = 'MS'
-l = [[] for i in range(NUM_AGENTS)]
-MSE_cen = [[] for i in range(NUM_AGENTS)]
-R2_cen = [[] for i in range(NUM_AGENTS)]
-adam = keras.optimizers.Adam(learning_rate=0.001)
-for i in range(NUM_AGENTS):
-    # models[i] = create_DNN()
-    models[i].compile(loss='mse', optimizer=adam, metrics=['mse'])
-    # callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-
-hist_l = [[] for i in range(NUM_AGENTS)]
-hist_mse = [[] for i in range(NUM_AGENTS)]
-hist_mean = []
-callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=10)
-for steps in range(TRAINING_LOOP):
-    for i in range(NUM_AGENTS):
-        models[i].fit(x=xx[i],y=yy[i],batch_size=BATCHSIZE,epochs=LOCAL_TRAINING_STEP,callbacks=[callback],shuffle=True,verbose=0,)
-        l[i] = models[i].predict(xx_test[i])
-        MSE_cen[i] = mean_squared_error(yy_test[i], l[i])
-        hist_l[i].append(l[i])
-        hist_mse[i].append(MSE_cen[i])
-
-    models = DistributedLearning(models,step=CONSENSUS_STEP,Graph=garph)
-    print('Steps:',steps,'Average_MSE=', np.mean(MSE_cen))
-    hist_mean.append(np.mean(MSE_cen))
-
-np.savez('Results/CNN/results_of_model'+str(NUM_AGENTS)+garph+'.npz',hist_l=hist_l,hist_mse=hist_mse,hist_mean=hist_mean)
-for i in range(NUM_AGENTS):
-    models[i].save('Results/CNN/model'+garph+str(i),include_optimizer = True)
-
+    models[i].save('Results/LSTM/model'+garph+str(i),include_optimizer = True)
 
