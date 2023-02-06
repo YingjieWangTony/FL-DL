@@ -221,6 +221,21 @@ class strategy_custom(fl.server.strategy.FedAvg):
         # print(len(weights_results[0])) # 2: 0 indicates parameters, 1 indicates num_examples
         # print(len(weights_results[0][0])) # 16: for each parameter set, 16 layers have parameters
         # print(weights_results[0][0][0].shape)
+
+
+        # with open(f'Results/test_round{server_round}.txt', 'w') as outfile:
+        #     for slice_4d in weights_results:
+        #         for slice_3d in slice_4d[0]:
+        #             # for slice_2d in slice_3d:
+        #             np.savetxt(outfile, slice_3d)
+        for i in range(len(weights_results)):
+            with open(f'Results/client_{i}_round{server_round}.txt', 'w') as outfile:
+            # for slice_4d in weights_results:
+                for slice_3d in weights_results[i][0]:
+                    # for slice_2d in slice_3d:
+                    np.savetxt(outfile, slice_3d)
+
+
         parameters_aggregated = ndarrays_to_parameters(self.aggregate(weights_results))
 
         # Post process parameter list
