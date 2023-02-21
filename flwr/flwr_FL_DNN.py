@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from typing import List, Tuple
-
+import sys
 import flwr as fl
 import numpy as np
 import matplotlib.pyplot as plt
@@ -97,6 +97,7 @@ class strategy_custom(fl.server.strategy.FedAvg):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        topology: Optional[MetricsAggregationFn] = None,
     ) -> None:
         super().__init__()
         self.fraction_fit = fraction_fit
@@ -111,6 +112,7 @@ class strategy_custom(fl.server.strategy.FedAvg):
         self.initial_parameters = initial_parameters
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
+        self.topology = topology
         if (
             min_fit_clients > min_available_clients
             or min_evaluate_clients > min_available_clients
@@ -150,7 +152,7 @@ class strategy_custom(fl.server.strategy.FedAvg):
         num_examples_total = sum([num_examples for _, num_examples in results])
 
         # Define (TMP) Laplace Matrix
-        L_support = self.Laplacian_Matrix(len(results),topology='Ring')
+        L_support = self.Laplacian_Matrix(len(results),topology=self.topology)
         # I am not sure the weights update law here is right or not. My update law would be X = np.matmul(L,X).
         # With our update law, After several steps, the value of X would converge to a single value.
 
@@ -408,6 +410,21 @@ def load_datasets(input, labels):
   return trainloaders, valloaders, testloaders
 trainloaders, valloaders, testloaders = load_datasets(input, labels)
 
+MODEL = 'DNN'
+# MODEL = 'WAVENET'
+# MODEL = 'CNN'
+# MODEL = 'LSTM'
+
+STRATEGY = 'FL'
+SUBSTRATEGY = 'None'
+
+STRATEGY = 'DL'
+SUBSTRATEGY = 'Ring'
+# SUBSTRATEGY = 'Full'
+# SUBSTRATEGY = 'MS'
+
+
+
 
 class Net(nn.Module):
     def __init__(self):
@@ -425,7 +442,90 @@ class Net(nn.Module):
         out = self.body(x)
         return out
 
-net = Net().to(DEVICE)
+class CNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv1d(1, 6, 2)
+        self.act = nn.ReLU(inplace=True)
+        self.fc1 = nn.Linear(32*47*6,64)
+        self.fc2 = nn.Linear(64,1)
+
+    def forward(self,x):
+        x = x.view(32, 1, 48)
+        x = self.conv1(x)
+        x = self.act(x)
+        x = x.view(-1)
+        x = self.fc1(x)
+        x = self.act(x)
+        out = self.fc2(x)
+        return out
+
+class LSTM(nn.Module):
+    def __init__(self, input_size=1, hidden_size=32, num_layers=1, output_size=1, batch_size=32):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.output_size = output_size
+        self.num_directions = 1 # 单向LSTM
+        self.batch_size = batch_size
+        self.lstm = nn.LSTM(self.input_size, self.hidden_size, self.num_layers, batch_first=True)
+        self.linear = nn.Linear(self.hidden_size, self.output_size)
+
+    def forward(self, input_seq):
+        h_0 = torch.randn(self.num_directions * self.num_layers, self.batch_size, self.hidden_size).to(DEVICE)
+        c_0 = torch.randn(self.num_directions * self.num_layers, self.batch_size, self.hidden_size).to(DEVICE)
+        seq_len = input_seq.shape[1]
+        input_seq = input_seq.view(self.batch_size, seq_len, 1)
+        
+        output, _ = self.lstm(input_seq, (h_0, c_0)) # output(32, 48, 32)
+        output = output.contiguous().view(self.batch_size * seq_len, self.hidden_size)  # (32 * 48, 32)
+
+
+        pred = self.linear(output)  # (32*48, 1)
+        pred = pred.view(self.batch_size, seq_len, -1) #(32,48,1)
+        pred = pred[:, -1, :]  # (32, 1)
+        return pred 
+if MODEL == 'DNN':
+    net = Net().to(DEVICE)
+
+elif MODEL=='CNN':   
+    net = CNN().to(DEVICE)
+
+elif MODEL == 'LSTM':
+    net = LSTM().to(DEVICE)
+
+elif MODEL == 'WAVENET':
+    sys.exit('NOT FINISH YET, PLEASE TRY OTHER MODELS.')
+    
+else:
+    sys.exit('NOT SUPPORT MODEL TYPE IN THIS VERSION, PLEASE TRY MODELS FROM DNN, CNN, LSTM, and WAVENET.')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 criterion = nn.MSELoss() 
@@ -519,7 +619,21 @@ def client_fn(cid: str) -> FlowerClient:
     """Create a Flower client representing a single organization."""
 
     # Load model
-    net = Net().to(DEVICE)
+    # net = Net().to(DEVICE)
+    if MODEL == 'DNN':
+        net = Net().to(DEVICE)
+
+    elif MODEL=='CNN':   
+        net = CNN().to(DEVICE)
+
+    elif MODEL == 'LSTM':
+        net = LSTM().to(DEVICE)
+
+    elif MODEL == 'WAVENET':
+        sys.exit('NOT FINISH YET, PLEASE TRY OTHER MODELS.')
+        
+    else:
+        sys.exit('NOT SUPPORT MODEL TYPE IN THIS VERSION, PLEASE TRY MODELS FROM DNN, CNN, LSTM, and WAVENET.')
     trainloader = trainloaders[int(cid)]
     valloader = valloaders[int(cid)]
 
@@ -529,22 +643,30 @@ def client_fn(cid: str) -> FlowerClient:
 NUM_CLIENTS = 30
 
 # Create FedAvg strategy
-# strategy = fl.server.strategy.FedAvg(
-#         fraction_fit=1.0,  # Sample 100% of available clients for training
-#         fraction_evaluate=0.3,  # Sample 50% of available clients for evaluation
-#         min_fit_clients=10,  # Never sample less than 10 clients for training
-#         min_evaluate_clients=5,  # Never sample less than 5 clients for evaluation
-#         min_available_clients=10,  # Wait until all 10 clients are available
-# )
-strategy = strategy_custom(
+
+
+
+
+if STRATEGY == 'FL':
+
+    strategy = fl.server.strategy.FedAvg(
+            fraction_fit=1.0,  # Sample 100% of available clients for training
+            fraction_evaluate=0.3,  # Sample 50% of available clients for evaluation
+            min_fit_clients=30,  # Never sample less than 10 clients for training
+            min_evaluate_clients=30,  # Never sample less than 5 clients for evaluation
+            min_available_clients=30,  # Wait until all 10 clients are available
+    )
+else:
+    strategy = strategy_custom(
         fraction_fit=1.0,
         fraction_evaluate=0.3,
         min_fit_clients=30,
-        min_evaluate_clients=5,
-        min_available_clients=10,
+        min_evaluate_clients=30,
+        min_available_clients=30,
         evaluate_metrics_aggregation_fn = weighted_average,
+        topology=SUBSTRATEGY,
         # fit_metrics_aggregation_fn = weighted_average_fit_metrics_aggregation_fn,
-)
+        )
 
 # Specify client resources if you need GPU (defaults to 1 CPU and 0 GPU)
 client_resources = None
@@ -553,10 +675,12 @@ if DEVICE.type == "cuda":
   client_resources = {"num_gpus": 1}
 
 # Start simulation
-fl.simulation.start_simulation(
+hist = fl.simulation.start_simulation(
     client_fn=client_fn,
     num_clients=NUM_CLIENTS,
-    config=fl.server.ServerConfig(num_rounds=5), #10
+    config=fl.server.ServerConfig(num_rounds=20), #10
     strategy=strategy,
     client_resources=client_resources,
 )
+
+# np.save('Results/losses/loss_'+str(STRATEGY)+'_'+str(SUBSTRATEGY)+'_'+str(MODEL)+'_.npy',hist.losses_distributed)
