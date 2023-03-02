@@ -60,10 +60,11 @@ from flwr.server.client_proxy import ClientProxy
 from functools import reduce
 
 
-# MODEL = 'CNN'
-# MODEL = 'WAVENET'
-# MODEL = 'CNN'
-MODEL = 'LSTM'
+
+# # MODEL = 'DNN'
+MODEL = 'WAVENET'
+# # MODEL = 'CNN'
+# # MODEL = 'LSTM'
 
 STRATEGY = 'FL'
 SUBSTRATEGY = 'None'
@@ -72,13 +73,6 @@ SUBSTRATEGY = 'None'
 # SUBSTRATEGY = 'Ring'
 # SUBSTRATEGY = 'Full'
 # SUBSTRATEGY = 'MS'
-
-
-
-
-
-
-
 
 
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -252,12 +246,12 @@ class strategy_custom(fl.server.strategy.FedAvg):
         #         for slice_3d in slice_4d[0]:
         #             # for slice_2d in slice_3d:
         #             np.savetxt(outfile, slice_3d)
-        for i in range(len(weights_results)):
-            with open(f'Results/client_{i}_round{server_round}.txt', 'w') as outfile:
-            # for slice_4d in weights_results:
-                for slice_3d in weights_results[i][0]:
-                    # for slice_2d in slice_3d:
-                    np.savetxt(outfile, slice_3d)
+        # for i in range(len(weights_results)):
+        #     with open(f'Results/client_{i}_round{server_round}.txt', 'w') as outfile:
+        #     # for slice_4d in weights_results:
+        #         for slice_3d in weights_results[i][0]:
+        #             # for slice_2d in slice_3d:
+        #             np.savetxt(outfile, slice_3d)
 
 
         parameters_aggregated = ndarrays_to_parameters(self.aggregate(weights_results))
@@ -341,12 +335,420 @@ class strategy_custom(fl.server.strategy.FedAvg):
         return client_pairs
 
 
-# DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 DEVICE = torch.device('cpu')
 print(f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}")
 torch.manual_seed(10)
 random.seed(10)
 np.random.seed(seed=10)
+
+
+# # parameters
+# time_step = 48
+# BATCH_SIZE = 32
+# data = []
+# with open (pathlib.Path(__file__).parent.absolute()/'House_30.txt', 'r') as reader:
+#   for line in reader:
+#     stripped_line = line.strip().split()
+#     data.append(stripped_line)
+
+# tem = [x[0] for x in data]
+# houses = list(sorted(set(tem)))
+
+# date = []
+# consumption = []
+# for i in houses:
+#   date.append([float(x[1]) for x in data if x[0]==i])
+#   consumption.append([float(x[2]) for x in data if x[0]==i]) 
+
+# def create_label(data, time_step):
+#   x_nest, y_nest = [], []
+#   for j in range(len(data)):
+#     x_data, y_data = [], []
+#     for i in range(len(data[j]) - time_step):
+#       x = data[j][i: (i + time_step)]
+#       x_data.append(x)
+#       y = [data[j][i + time_step]]
+#       y_data.append(y)
+
+#     #x_data = np.array(x_data)[:, :, np.newaxis]
+#     x_data = np.array(x_data)[:, :]
+#     #x_data = np.array(x_data)[:, np.newaxis, :]
+#     x_nest.append(x_data)
+#     y_nest.append(y_data)
+#   x_nest = np.array(x_nest)
+#   y_nest = np.array(y_nest)
+#   return x_nest, y_nest
+# # 可能要去掉x的最后一个维度 从（48，1）变为（48）
+# input, labels = create_label(consumption, time_step)
+# input = np.float32(input)
+# labels = np.float32(labels)
+
+
+# # 定义GetLoader类，继承Dataset方法，并重写__getitem__()和__len__()方法
+# class GetLoader(torch.utils.data.Dataset):
+# 	# 初始化函数，得到数据
+#     def __init__(self, data_root, data_label):
+#         self.data = data_root
+#         self.label = data_label
+#     # index是根据batchsize划分数据后得到的索引，最后将data和对应的labels进行一起返回
+#     def __getitem__(self, index):
+#         data = self.data[index]
+#         labels = self.label[index]
+#         return data, labels
+#     # 该函数返回数据大小长度，目的是DataLoader方便划分，如果不知道大小，DataLoader会一脸懵逼
+#     def __len__(self):
+#         return len(self.data)
+
+# length = len(input[0])
+# val = int(0.7*length)
+# test = int(0.9*length)
+# trainloaders = []
+# valloaders = []
+# testloaders = []
+
+# def load_datasets(input, labels):
+
+#   Xtrain_raw = [x[0: val] for x in input]
+#   Xval_raw = [x[val: test] for x in input]
+#   Xtest_raw = [x[test: ] for x in input]
+
+#   Ytrain_raw = [x[0: val] for x in labels]
+#   Yval_raw = [x[val: test] for x in labels]
+#   Ytest_raw = [x[test: ] for x in labels]
+
+#   for i in range(30):
+#     ds_train = GetLoader(Xtrain_raw[i], Ytrain_raw[i])
+#     trainloaders.append(DataLoader(ds_train, batch_size=BATCH_SIZE, shuffle=False))
+#     ds_val = GetLoader(Xval_raw[i], Yval_raw[i])
+#     valloaders.append(DataLoader(ds_val, batch_size=BATCH_SIZE))
+#     ds_test= GetLoader(Xtest_raw[i], Ytest_raw[i])
+#     testloaders.append(DataLoader(ds_test, batch_size=BATCH_SIZE))
+
+#   return trainloaders, valloaders, testloaders
+# trainloaders, valloaders, testloaders = load_datasets(input, labels)
+
+# # MODEL = 'DNN'
+# MODEL = 'WAVENET'
+# # MODEL = 'CNN'
+# # MODEL = 'LSTM'
+
+# STRATEGY = 'FL'
+# SUBSTRATEGY = 'None'
+
+# # STRATEGY = 'DL'
+# # SUBSTRATEGY = 'Ring'
+# # SUBSTRATEGY = 'Full'
+# # SUBSTRATEGY = 'MS'
+
+# class CasualDilatedConv1D(nn.Module):
+#     def __init__(self, in_channels, out_channels, kernel_size, dilation, padding=1):
+#         super().__init__()
+#         self.conv1D = nn.Conv1d(in_channels, out_channels, kernel_size, dilation=dilation, bias=False, padding='same')
+#         self.ignoreOutIndex = (kernel_size - 1) * dilation
+
+#     def forward(self, x):
+#         return self.conv1D(x)[..., :-self.ignoreOutIndex]
+
+
+# class DenseLayer(nn.Module):
+#     def __init__(self, in_channels):
+#         super().__init__()
+#         self.relu = nn.ReLU()
+#         self.softmax = nn.Softmax(dim=1) # dim=2
+#         self.conv1d = nn.Conv1d(in_channels, in_channels, kernel_size=1, bias=False)
+
+#     def forward(self, skipConnection):
+#         # as b c outputsize -> skipConnection size
+#         out = torch.mean(skipConnection, dim=0)
+
+#         for i in range(2):
+#             out = self.relu(out)
+#             out = self.conv1d(out)
+#         return self.softmax(out)
+
+
+# class ResBlock(nn.Module):
+#     def __init__(self, res_channels, skip_channels, kernel_size, dilation):
+#         super().__init__()
+#         self.casualDilatedConv1D = CasualDilatedConv1D(res_channels, res_channels, kernel_size, dilation=dilation)
+#         self.resConv1D = nn.Conv1d(res_channels, res_channels, kernel_size=1)
+#         self.skipConv1D = nn.Conv1d(res_channels, skip_channels, kernel_size=1)
+#         self.tanh = nn.Tanh()
+#         self.sigmoid = nn.Sigmoid()
+
+#     def forward(self, inputX, skipSize):
+#         x = self.casualDilatedConv1D(inputX)
+#         x1 = self.tanh(x)
+#         x2 = self.sigmoid(x)
+#         x = x1 * x2
+#         resOutput = self.resConv1D(x)
+#         resOutput = resOutput + inputX[..., -resOutput.size(1):] # resOutput.size(2)
+#         skipOutput = self.skipConv1D(x)
+#         skipOutput = skipOutput[..., -skipSize:]
+#         return resOutput, skipOutput
+
+
+# class StackOfResBlocks(nn.Module):
+
+#     def __init__(self, stack_size, layer_size, res_channels, skip_channels, kernel_size):
+#         super().__init__()
+#         buildDilationFunc = np.vectorize(self.buildDilation)
+#         dilations = buildDilationFunc(stack_size, layer_size)
+#         self.resBlocks = []
+#         for s,dilationPerStack in enumerate(dilations):
+#             for l,dilation in enumerate(dilationPerStack):
+#                 resBlock=ResBlock(res_channels, skip_channels, kernel_size, dilation)
+#                 self.add_module(f'resBlock_{s}_{l}', resBlock) # Add modules manually
+#                 self.resBlocks.append(resBlock)
+
+#     def buildDilation(self, stack_size, layer_size):
+#         # stack1=[1,2,4,8,16,...512]
+#         dilationsForAllStacks = []
+#         for stack in range(stack_size):
+#             dilations = []
+#             for layer in range(layer_size):
+#                 dilations.append(2 ** layer)
+#             dilationsForAllStacks.append(dilations)
+#         return dilationsForAllStacks
+
+#     def forward(self, x, skipSize):
+#         resOutput = x
+#         skipOutputs = []
+#         for resBlock in self.resBlocks:
+#             resOutput, skipOutput = resBlock(resOutput, skipSize)
+#             skipOutputs.append(skipOutput)
+#         return resOutput, torch.stack(skipOutputs)
+
+
+# class WaveNet(nn.Module):
+#     def __init__(self, in_channels, out_channels, kernel_size, stack_size, layer_size):
+#         super().__init__()
+#         self.stack_size = stack_size
+#         self.layer_size = layer_size
+#         self.kernel_size = kernel_size
+#         self.casualConv1D = CasualDilatedConv1D(in_channels, in_channels, kernel_size, dilation=1)
+#         self.stackResBlock = StackOfResBlocks(self.stack_size, self.layer_size, in_channels, out_channels, kernel_size)
+#         self.denseLayer = DenseLayer(out_channels)
+
+
+#     def calculateReceptiveField(self):
+#         return np.sum([(self.kernel_size - 1) * (2 ** l) for l in range(self.layer_size)] * self.stack_size)
+
+#     def calculateOutputSize(self, x):
+#         return int(x.size(1)) - self.calculateReceptiveField() # x.size(2)
+
+#     def forward(self, x):
+#         # x: b c t -> input data size
+#         x = self.casualConv1D(x)
+#         skipSize = self.calculateOutputSize(x)
+#         _, skipConnections = self.stackResBlock(x, skipSize)
+#         dense=self.denseLayer(skipConnections)
+#         return dense
+    
+# class WaveNetPre(nn.Module):
+#     def __init__(self,seqLen,output_size):
+#         super().__init__()
+#         self.output_size=output_size
+#         self.wavenet=WaveNet(32,32,2,3,4) # 1 1 2 3 4
+#       #  self.liner=nn.Linear(2,output_size) # seqLen-self.wavenet.calculateReceptiveField()
+#         self.softmax=nn.Softmax(-1)
+    
+#     def forward(self,x):
+#         x=self.wavenet(x)
+#       #  x=self.liner(x)
+#         return self.softmax(x)
+
+
+# # criterion = nn.MSELoss() 
+# def train(net, trainloader, epochs: int, verbose=False):
+#     """Train the network on the training set."""
+#     criterion = nn.MSELoss()
+#     optimizer = torch.optim.Adam(net.parameters())
+#     net.train()
+#     for epoch in range(epochs):
+#         correct, total, epoch_loss = 0, 0, 0.0
+#         for x, y in trainloader:
+            
+#             x, y = x.to(DEVICE), y.to(DEVICE)
+#             optimizer.zero_grad()
+
+#             #x = x.unsqueeze(0)
+#             outputs = net(x)
+#             loss = criterion(net(x), y)
+#             loss.backward()
+#             optimizer.step()
+#             epoch_loss += loss
+           
+#         epoch_loss /= len(trainloader.dataset)
+#         if verbose:
+#             print(f"Epoch {epoch+1}: train loss {epoch_loss}") 
+
+
+# def test(net, testloader):
+#     """Evaluate the network on the entire test set."""
+#     criterion = nn.MSELoss()
+#     correct, total, loss = 0, 0, 0.0
+#     net.eval()
+#     with torch.no_grad():
+#         for x, y in testloader:
+#             x, y = x.to(DEVICE), y.to(DEVICE)
+#             outputs = net(x)
+#             loss += criterion(outputs, y).item()
+
+#     loss /= len(testloader.dataset)
+   
+#     return loss 
+
+
+# # # Central part
+
+# # x, y = next(iter(trainloaders[0]))
+# # trainloader = trainloaders[0]
+# # valloader = valloaders[0]
+# # testloader = testloaders[0]
+# # net = Net().to(DEVICE)
+
+
+# # for epoch in range(5):
+# #     train(net, trainloader, 1)
+# #     loss = test(net, valloader)
+# #     print(f"Epoch {epoch+1}: validation loss {loss}")
+
+# # loss = test(net, testloader)
+# # print(f"Final test set performance:\n\tloss {loss}")
+
+
+
+# # FL part
+
+# def get_parameters(net) -> List[np.ndarray]:
+#     return [val.cpu().numpy() for _, val in net.state_dict().items()]
+
+# def set_parameters(net, parameters: List[np.ndarray]):
+#     params_dict = zip(net.state_dict().keys(), parameters)
+#     state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+#     net.load_state_dict(state_dict, strict=True)
+
+# class FlowerClient(fl.client.NumPyClient):
+#     def __init__(self, net, trainloader, valloader):
+#         self.net = net
+#         self.trainloader = trainloader
+#         self.valloader = valloader
+
+#     def get_parameters(self, config):
+#         return get_parameters(self.net)
+
+#     def fit(self, parameters, config):
+#         set_parameters(self.net, parameters)
+#         train(self.net, self.trainloader, epochs=1)
+#         return get_parameters(self.net), len(self.trainloader), {}
+
+#     def evaluate(self, parameters, config):
+#         set_parameters(self.net, parameters)
+#         loss = test(self.net, self.valloader)
+#         return float(loss), len(self.valloader), {"accuracy": float(0)}
+
+# def client_fn(cid: str) -> FlowerClient:
+#     """Create a Flower client representing a single organization."""
+
+#     # # Load model
+#     # # net = Net().to(DEVICE)
+#     # if MODEL == 'DNN':
+#     #     net = Net().to(DEVICE)
+
+#     # elif MODEL=='CNN':   
+#     #     net = CNN().to(DEVICE)
+
+#     # elif MODEL == 'LSTM':
+#     #     net = LSTM().to(DEVICE)
+
+#     # elif MODEL == 'WAVENET':
+#     #     # sys.exit('NOT FINISH YET, PLEASE TRY OTHER MODELS.')
+#     net = WaveNetPre(48, 1).to(DEVICE)
+        
+#     # else:
+#     #     sys.exit('NOT SUPPORT MODEL TYPE IN THIS VERSION, PLEASE TRY MODELS FROM DNN, CNN, LSTM, and WAVENET.')
+#     trainloader = trainloaders[int(cid)]
+#     valloader = valloaders[int(cid)]
+
+#     # Create a  single Flower client representing a single organization
+#     return FlowerClient(net, trainloader, valloader)
+
+# NUM_CLIENTS = 30
+
+# # Create FedAvg strategy
+
+
+
+
+# if STRATEGY == 'FL':
+
+#     strategy = fl.server.strategy.FedAvg(
+#             fraction_fit=1.0,  # Sample 100% of available clients for training
+#             fraction_evaluate=0.3,  # Sample 50% of available clients for evaluation
+#             min_fit_clients=10,  # Never sample less than 10 clients for training
+#             min_evaluate_clients=5,  # Never sample less than 5 clients for evaluation
+#             min_available_clients=10,  # Wait until all 10 clients are available
+#     )
+# else:
+#     strategy = strategy_custom(
+#         fraction_fit=1.0,
+#         fraction_evaluate=0.3,
+#         min_fit_clients=30,
+#         min_evaluate_clients=30,
+#         min_available_clients=30,
+#         evaluate_metrics_aggregation_fn = weighted_average,
+#         topology=SUBSTRATEGY,
+#         # fit_metrics_aggregation_fn = weighted_average_fit_metrics_aggregation_fn,
+#         )
+
+# # Specify client resources if you need GPU (defaults to 1 CPU and 0 GPU)
+# client_resources = None
+# DEVICE = torch.device("cpu") 
+# if DEVICE.type == "cuda":
+#   client_resources = {"num_gpus": 1}
+
+# # Start simulation
+# hist = fl.simulation.start_simulation(
+#     client_fn=client_fn,
+#     num_clients=NUM_CLIENTS,
+#     config=fl.server.ServerConfig(num_rounds=5), #10
+#     strategy=strategy,
+#     client_resources=client_resources,
+# )
+
+# np.save('Results/losses/loss_'+str(STRATEGY)+'_'+str(SUBSTRATEGY)+'_'+str(MODEL)+'_.npy',hist.losses_distributed)
+
+
+
+
+
+
+
+
+
+
+
+
+# from collections import OrderedDict
+# from typing import List, Tuple
+
+# import flwr as fl
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import torch
+# import torch.nn as nn
+# import torchvision
+# import torch.nn.functional as F
+# import torchvision.transforms as transforms
+# from flwr.common import Metrics
+# from torch.utils.data import DataLoader, random_split
+# from torchvision.datasets import CIFAR10
+
+DEVICE = torch.device("cpu")  # Try "cuda" to train on GPU
+print(f"Training on {DEVICE} using PyTorch {torch.__version__} and Flower {fl.__version__}")
+
 # parameters
 time_step = 48
 BATCH_SIZE = 32
@@ -357,14 +759,14 @@ with open (pathlib.Path(__file__).parent.absolute()/'House_30.txt', 'r') as read
     data.append(stripped_line)
 
 tem = [x[0] for x in data]
-houses = list(sorted(set(tem)))
+houses = list(set(tem))
 
 date = []
 consumption = []
 for i in houses:
   date.append([float(x[1]) for x in data if x[0]==i])
-  consumption.append([float(x[2]) for x in data if x[0]==i]) 
-
+  consumption.append([float(x[2]) for x in data if x[0]==i])    
+  
 def create_label(data, time_step):
   x_nest, y_nest = [], []
   for j in range(len(data)):
@@ -387,7 +789,6 @@ def create_label(data, time_step):
 input, labels = create_label(consumption, time_step)
 input = np.float32(input)
 labels = np.float32(labels)
-
 
 # 定义GetLoader类，继承Dataset方法，并重写__getitem__()和__len__()方法
 class GetLoader(torch.utils.data.Dataset):
@@ -430,116 +831,127 @@ def load_datasets(input, labels):
     testloaders.append(DataLoader(ds_test, batch_size=BATCH_SIZE, drop_last=True))
 
   return trainloaders, valloaders, testloaders
+
 trainloaders, valloaders, testloaders = load_datasets(input, labels)
-
-
-
-
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        act = nn.Sigmoid
-        self.body = nn.Sequential(
-            nn.Linear(48, 48),
-            act(),
-            nn.Linear(48, 48),
-            act(),
-            nn.Linear(48, 1)
-        )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = self.body(x)
-        return out
-
-class CNN(nn.Module):
-    def __init__(self):
+import torch.nn as nn
+class CasualDilatedConv1D(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, dilation, padding=1):
         super().__init__()
-        self.conv1 = nn.Conv1d(1, 6, 2)
-        self.act = nn.ReLU(inplace=True)
-        self.fc1 = nn.Linear(32*47*6,64)
-        self.fc2 = nn.Linear(64,1)
+        self.conv1D = nn.Conv1d(in_channels, out_channels, kernel_size, dilation=dilation, bias=False, padding='same')
+        self.ignoreOutIndex = (kernel_size - 1) * dilation
 
-    def forward(self,x):
-        x = x.view(32, 1, 48)
-        x = self.conv1(x)
-        x = self.act(x)
-        x = x.view(-1)
-        x = self.fc1(x)
-        x = self.act(x)
-        out = self.fc2(x)
-        return out
+    def forward(self, x):
+        return self.conv1D(x)[..., :-self.ignoreOutIndex]
 
-class LSTM(nn.Module):
-    def __init__(self, input_size=1, hidden_size=32, num_layers=1, output_size=1, batch_size=32):
+
+class DenseLayer(nn.Module):
+    def __init__(self, in_channels):
         super().__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.output_size = output_size
-        self.num_directions = 1 # 单向LSTM
-        self.batch_size = batch_size
-        self.lstm = nn.LSTM(self.input_size, self.hidden_size, self.num_layers, batch_first=True)
-        self.linear = nn.Linear(self.hidden_size, self.output_size)
+        self.relu = nn.ReLU()
+        self.softmax = nn.Softmax(dim=1) # dim=2
+        self.conv1d = nn.Conv1d(in_channels, in_channels, kernel_size=1, bias=False)
 
-    def forward(self, input_seq):
-        h_0 = torch.randn(self.num_directions * self.num_layers, self.batch_size, self.hidden_size).to(DEVICE)
-        c_0 = torch.randn(self.num_directions * self.num_layers, self.batch_size, self.hidden_size).to(DEVICE)
-        seq_len = input_seq.shape[1]
-        input_seq = input_seq.view(self.batch_size, seq_len, 1)
-        
-        output, _ = self.lstm(input_seq, (h_0, c_0)) # output(32, 48, 32)
-        output = output.contiguous().view(self.batch_size * seq_len, self.hidden_size)  # (32 * 48, 32)
+    def forward(self, skipConnection):
+        # as b c outputsize -> skipConnection size
+        out = torch.mean(skipConnection, dim=0)
+
+        for i in range(2):
+            out = self.relu(out)
+            out = self.conv1d(out)
+        return self.softmax(out)
 
 
-        pred = self.linear(output)  # (32*48, 1)
-        pred = pred.view(self.batch_size, seq_len, -1) #(32,48,1)
-        pred = pred[:, -1, :]  # (32, 1)
-        return pred 
-if MODEL == 'DNN':
-    net = Net().to(DEVICE)
+class ResBlock(nn.Module):
+    def __init__(self, res_channels, skip_channels, kernel_size, dilation):
+        super().__init__()
+        self.casualDilatedConv1D = CasualDilatedConv1D(res_channels, res_channels, kernel_size, dilation=dilation)
+        self.resConv1D = nn.Conv1d(res_channels, res_channels, kernel_size=1)
+        self.skipConv1D = nn.Conv1d(res_channels, skip_channels, kernel_size=1)
+        self.tanh = nn.Tanh()
+        self.sigmoid = nn.Sigmoid()
 
-elif MODEL=='CNN':   
-    net = CNN().to(DEVICE)
+    def forward(self, inputX, skipSize):
+        x = self.casualDilatedConv1D(inputX)
+        x1 = self.tanh(x)
+        x2 = self.sigmoid(x)
+        x = x1 * x2
+        resOutput = self.resConv1D(x)
+        resOutput = resOutput + inputX[..., -resOutput.size(1):] # resOutput.size(2)
+        skipOutput = self.skipConv1D(x)
+        skipOutput = skipOutput[..., -skipSize:]
+        return resOutput, skipOutput
 
-elif MODEL == 'LSTM':
-    net = LSTM().to(DEVICE)
 
-elif MODEL == 'WAVENET':
-    sys.exit('NOT FINISH YET, PLEASE TRY OTHER MODELS.')
+class StackOfResBlocks(nn.Module):
+
+    def __init__(self, stack_size, layer_size, res_channels, skip_channels, kernel_size):
+        super().__init__()
+        buildDilationFunc = np.vectorize(self.buildDilation)
+        dilations = buildDilationFunc(stack_size, layer_size)
+        self.resBlocks = []
+        for s,dilationPerStack in enumerate(dilations):
+            for l,dilation in enumerate(dilationPerStack):
+                resBlock=ResBlock(res_channels, skip_channels, kernel_size, dilation)
+                self.add_module(f'resBlock_{s}_{l}', resBlock) # Add modules manually
+                self.resBlocks.append(resBlock)
+
+    def buildDilation(self, stack_size, layer_size):
+        # stack1=[1,2,4,8,16,...512]
+        dilationsForAllStacks = []
+        for stack in range(stack_size):
+            dilations = []
+            for layer in range(layer_size):
+                dilations.append(2 ** layer)
+            dilationsForAllStacks.append(dilations)
+        return dilationsForAllStacks
+
+    def forward(self, x, skipSize):
+        resOutput = x
+        skipOutputs = []
+        for resBlock in self.resBlocks:
+            resOutput, skipOutput = resBlock(resOutput, skipSize)
+            skipOutputs.append(skipOutput)
+        return resOutput, torch.stack(skipOutputs)
+
+
+class WaveNet(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stack_size, layer_size):
+        super().__init__()
+        self.stack_size = stack_size
+        self.layer_size = layer_size
+        self.kernel_size = kernel_size
+        self.casualConv1D = CasualDilatedConv1D(in_channels, in_channels, kernel_size, dilation=1)
+        self.stackResBlock = StackOfResBlocks(self.stack_size, self.layer_size, in_channels, out_channels, kernel_size)
+        self.denseLayer = DenseLayer(out_channels)
+
+
+    def calculateReceptiveField(self):
+        return np.sum([(self.kernel_size - 1) * (2 ** l) for l in range(self.layer_size)] * self.stack_size)
+
+    def calculateOutputSize(self, x):
+        return int(x.size(1)) - self.calculateReceptiveField() # x.size(2)
+
+    def forward(self, x):
+        # x: b c t -> input data size
+        x = self.casualConv1D(x)
+        skipSize = self.calculateOutputSize(x)
+        _, skipConnections = self.stackResBlock(x, skipSize)
+        dense=self.denseLayer(skipConnections)
+        return dense
     
-else:
-    sys.exit('NOT SUPPORT MODEL TYPE IN THIS VERSION, PLEASE TRY MODELS FROM DNN, CNN, LSTM, and WAVENET.')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-criterion = nn.MSELoss() 
-
+class WaveNetPre(nn.Module):
+    def __init__(self,seqLen,output_size):
+        super().__init__()
+        self.output_size=output_size
+        self.wavenet=WaveNet(32,32,2,3,4) # 1 1 2 3 4
+      #  self.liner=nn.Linear(2,output_size) # seqLen-self.wavenet.calculateReceptiveField()
+        self.softmax=nn.Softmax(-1)
+    
+    def forward(self,x):
+        x=self.wavenet(x)
+      #  x=self.liner(x)
+        return self.softmax(x)
+    
 def train(net, trainloader, epochs: int, verbose=False):
     """Train the network on the training set."""
     criterion = nn.MSELoss()
@@ -548,8 +960,11 @@ def train(net, trainloader, epochs: int, verbose=False):
     for epoch in range(epochs):
         correct, total, epoch_loss = 0, 0, 0.0
         for x, y in trainloader:
+            
             x, y = x.to(DEVICE), y.to(DEVICE)
             optimizer.zero_grad()
+
+            #x = x.unsqueeze(0)
             outputs = net(x)
             loss = criterion(net(x), y)
             loss.backward()
@@ -576,15 +991,16 @@ def test(net, testloader):
    
     return loss 
 
+x, y = next(iter(trainloaders[0]))
+x.unsqueeze(0).shape
 
-# # Central part
+trainloader = trainloaders[0]
+valloader = valloaders[0]
+testloader = testloaders[0]
 
-# x, y = next(iter(trainloaders[0]))
-# trainloader = trainloaders[0]
-# valloader = valloaders[0]
-# testloader = testloaders[0]
-# net = Net().to(DEVICE)
-
+net = WaveNetPre(48,1).to(DEVICE)
+#net = WaveNet().to(DEVICE)
+#net = CNN().to(DEVICE)
 
 # for epoch in range(5):
 #     train(net, trainloader, 1)
@@ -593,10 +1009,6 @@ def test(net, testloader):
 
 # loss = test(net, testloader)
 # print(f"Final test set performance:\n\tloss {loss}")
-
-
-
-# FL part
 
 def get_parameters(net) -> List[np.ndarray]:
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
@@ -629,21 +1041,10 @@ def client_fn(cid: str) -> FlowerClient:
     """Create a Flower client representing a single organization."""
 
     # Load model
-    # net = Net().to(DEVICE)
-    if MODEL == 'DNN':
-        net = Net().to(DEVICE)
+    net = WaveNetPre(48,1).to(DEVICE)
 
-    elif MODEL=='CNN':   
-        net = CNN().to(DEVICE)
 
-    elif MODEL == 'LSTM':
-        net = LSTM().to(DEVICE)
 
-    elif MODEL == 'WAVENET':
-        sys.exit('NOT FINISH YET, PLEASE TRY OTHER MODELS.')
-        
-    else:
-        sys.exit('NOT SUPPORT MODEL TYPE IN THIS VERSION, PLEASE TRY MODELS FROM DNN, CNN, LSTM, and WAVENET.')
     trainloader = trainloaders[int(cid)]
     valloader = valloaders[int(cid)]
 
@@ -652,7 +1053,28 @@ def client_fn(cid: str) -> FlowerClient:
 
 NUM_CLIENTS = 30
 
-# Create FedAvg strategy
+# # Create FedAvg strategy
+# strategy = fl.server.strategy.FedAvg(
+#         fraction_fit=1.0,  # Sample 100% of available clients for training
+#         fraction_evaluate=0.3,  # Sample 50% of available clients for evaluation
+#         min_fit_clients=10,  # Never sample less than 10 clients for training
+#         min_evaluate_clients=5,  # Never sample less than 5 clients for evaluation
+#         min_available_clients=10,  # Wait until all 10 clients are available
+# )
+
+# # Specify client resources if you need GPU (defaults to 1 CPU and 0 GPU)
+# client_resources = None
+# if DEVICE.type == "cuda":
+#   client_resources = {"num_gpus": 1}
+
+# # Start simulation
+# fl.simulation.start_simulation(
+#     client_fn=client_fn,
+#     num_clients=NUM_CLIENTS,
+#     config=fl.server.ServerConfig(num_rounds=5), #10
+#     strategy=strategy,
+#     client_resources=client_resources,
+# )
 
 
 

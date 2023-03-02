@@ -59,6 +59,29 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from functools import reduce
 
+
+MODEL = 'DNN'
+# MODEL = 'WAVENET'
+# MODEL = 'CNN'
+# MODEL = 'LSTM'
+
+STRATEGY = 'FL'
+SUBSTRATEGY = 'None'
+
+# STRATEGY = 'DL'
+# SUBSTRATEGY = 'Ring'
+# SUBSTRATEGY = 'Full'
+# SUBSTRATEGY = 'MS'
+
+
+
+
+
+
+
+
+
+
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     # Multiply accuracy of each client by number of examples used
     accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
@@ -410,18 +433,7 @@ def load_datasets(input, labels):
   return trainloaders, valloaders, testloaders
 trainloaders, valloaders, testloaders = load_datasets(input, labels)
 
-MODEL = 'DNN'
-# MODEL = 'WAVENET'
-# MODEL = 'CNN'
-# MODEL = 'LSTM'
 
-STRATEGY = 'FL'
-SUBSTRATEGY = 'None'
-
-STRATEGY = 'DL'
-SUBSTRATEGY = 'Ring'
-# SUBSTRATEGY = 'Full'
-# SUBSTRATEGY = 'MS'
 
 
 
@@ -556,15 +568,18 @@ def test(net, testloader):
     criterion = nn.MSELoss()
     correct, total, loss = 0, 0, 0.0
     net.eval()
+    # real = []
+    # predict = []
     with torch.no_grad():
         for x, y in testloader:
             x, y = x.to(DEVICE), y.to(DEVICE)
             outputs = net(x)
             loss += criterion(outputs, y).item()
-
+            # real.append(y.cpu().detach().numpy()[0][0])
+            # predict.append(outputs.cpu().detach().numpy()[0][0])
     loss /= len(testloader.dataset)
    
-    return loss 
+    return loss
 
 
 # # Central part
@@ -678,9 +693,37 @@ if DEVICE.type == "cuda":
 hist = fl.simulation.start_simulation(
     client_fn=client_fn,
     num_clients=NUM_CLIENTS,
-    config=fl.server.ServerConfig(num_rounds=20), #10
+    config=fl.server.ServerConfig(num_rounds=10), #10
     strategy=strategy,
     client_resources=client_resources,
 )
 
 # np.save('Results/losses/loss_'+str(STRATEGY)+'_'+str(SUBSTRATEGY)+'_'+str(MODEL)+'_.npy',hist.losses_distributed)
+
+def finaltest(net, testloader):
+    """Evaluate the network on the entire test set."""
+    criterion = nn.MSELoss()
+    correct, total, loss = 0, 0, 0.0
+    net.eval()
+    real = []
+    predict = []
+    with torch.no_grad():
+        for x, y in testloader:
+            x, y = x.to(DEVICE), y.to(DEVICE)
+            outputs = net(x)
+            loss += criterion(outputs, y).item()
+            real.append(y.cpu().detach().numpy()[0][0])
+            predict.append(outputs.cpu().detach().numpy()[0][0])
+    loss /= len(testloader.dataset)
+   
+    return loss,real,predict 
+x, y = next(iter(trainloaders[20]))
+trainloader = trainloaders[20]
+valloader = valloaders[20]
+testloader = testloaders[20]
+loss,real,predict  = finaltest(net, testloader)
+print(f"Final test set performance:\n\tloss {loss}")
+loss,real,predict  = finaltest(net, trainloader)
+print(f"Final test set performance:\n\tloss {loss}")
+
+np.savez('Results/losses/forecast_'+str(STRATEGY)+'_'+str(SUBSTRATEGY)+'_'+str(MODEL)+'_.npy',real,predict)

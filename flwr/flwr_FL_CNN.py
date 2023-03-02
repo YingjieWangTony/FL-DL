@@ -59,6 +59,26 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from functools import reduce
 
+# MODEL = 'CNN'
+# MODEL = 'WAVENET'
+MODEL = 'CNN'
+# MODEL = 'LSTM'
+
+STRATEGY = 'FL'
+SUBSTRATEGY = 'None'
+
+# STRATEGY = 'DL'
+# SUBSTRATEGY = 'Ring'
+# SUBSTRATEGY = 'Full'
+# SUBSTRATEGY = 'MS'
+
+
+
+
+
+
+
+
 def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     # Multiply accuracy of each client by number of examples used
     accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
@@ -409,18 +429,7 @@ def load_datasets(input, labels):
 
   return trainloaders, valloaders, testloaders
 trainloaders, valloaders, testloaders = load_datasets(input, labels)
-# MODEL = 'CNN'
-# MODEL = 'WAVENET'
-MODEL = 'CNN'
-# MODEL = 'LSTM'
 
-# STRATEGY = 'FL'
-# SUBSTRATEGY = 'None'
-
-STRATEGY = 'DL'
-# SUBSTRATEGY = 'Ring'
-# SUBSTRATEGY = 'Full'
-SUBSTRATEGY = 'MS'
 
 
 
@@ -682,4 +691,4 @@ hist = fl.simulation.start_simulation(
     client_resources=client_resources,
 )
 
-np.save('Results/losses/loss_'+str(STRATEGY)+'_'+str(SUBSTRATEGY)+'_CNN_.npy',hist.losses_distributed)
+np.save('Results/losses/loss_'+str(STRATEGY)+'_'+str(SUBSTRATEGY)+'_'+str(MODEL)+'_.npy',hist.losses_distributed)
